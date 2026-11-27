@@ -22,14 +22,19 @@ RUN apt-get update && \
 # ============================================================
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
+        numpy \
         pandas \
+        scipy \
+        scikit-learn \
+        matplotlib \
+        seaborn \
         lz4==4.3.3 \
-        pyspark==4.2.0 --no-cache-dir \
+        pyspark==4.2.0 \
         "jupyterlab>=4.4,<5" \
         "notebook>=7,<8" \
         "jupyter_server>=2,<3" \
         "tornado>=6.4,<7" \
-	findspark   --no-cache-dir \
+        findspark \
         pyarrow \
         scales
 

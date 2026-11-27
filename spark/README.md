@@ -17,7 +17,7 @@ A Dockerized Apache Spark 4.2.0 standalone cluster — one master, three workers
    ```bash
    docker compose -f docker-compose.yml up -d --build
    ```
-   This builds `my-spark:4.2.0` from `Dockerfile` (based on the official `spark:4.2.0-java21-python3` image, with pandas, pyspark, pyarrow, findspark and JupyterLab added) and starts five containers:
+   This builds `my-spark:4.2.0` from `Dockerfile` (based on the official `spark:4.2.0-java21-python3` image, with NumPy, pandas, SciPy, scikit-learn, Matplotlib, Seaborn, PyArrow, findspark and JupyterLab added) and starts five containers:
 
    - `spark-master` — Spark Master + JupyterLab
    - `spark-worker-a`, `spark-worker-b`, `spark-worker-c` — 3 workers
@@ -39,6 +39,7 @@ A Dockerized Apache Spark 4.2.0 standalone cluster — one master, three workers
    ```python
    spark = SparkSession.builder.master("spark://spark-master:7077").getOrCreate()
    ```
+   Spark MLlib is included with Apache Spark; the added scikit-learn stack is available for local ML workflows and analysis.
 6. Folder layout used by the containers:
 
    - `apps/` → mounted at `/opt/spark-apps` on every container (Spark scripts; it is also the working directory of the Jupyter kernels).
