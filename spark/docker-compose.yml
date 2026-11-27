@@ -22,6 +22,7 @@ services:
 
     volumes:
       - ./apps:/opt/spark-apps
+      - ../src:/opt/spark-apps/src
       - ./data:/opt/spark-data
       - ./spark-logs:/tmp/spark-events
 
