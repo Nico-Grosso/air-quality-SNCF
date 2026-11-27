@@ -1,0 +1,37 @@
+% Evidence tags and status labels.
+% Every statement of fact in these documents carries one evidence tag.
+\definecolor{tagsource}{HTML}{2E7D32}
+\definecolor{tagobserved}{HTML}{1565C0}
+\definecolor{taginterp}{HTML}{6A1B9A}
+\definecolor{tagassumed}{HTML}{EF6C00}
+\definecolor{tagunknown}{HTML}{C62828}
+\definecolor{tagstatus}{HTML}{455A64}
+
+\newcommand{\tagbox}[2]{{\setlength{\fboxsep}{1.2pt}\fcolorbox{#1}{#1!8}{\textcolor{#1}{\scriptsize\sffamily\bfseries #2}}}}
+
+% Evidence levels
+\newcommand{\tSource}{\tagbox{tagsource}{SOURCE}}
+\newcommand{\tObserved}{\tagbox{tagobserved}{OBSERVED}}
+\newcommand{\tInterp}{\tagbox{taginterp}{INTERPRETATION}}
+\newcommand{\tAssumed}{\tagbox{tagassumed}{ASSUMED}}
+\newcommand{\tUnknown}{\tagbox{tagunknown}{UNKNOWN}}
+
+% Status labels (decisions, hypotheses, gaps, sources)
+\newcommand{\status}[1]{\tagbox{tagstatus}{#1}}
+\newcommand{\sWorking}{\status{WORKING}}
+\newcommand{\sProposed}{\status{PROPOSED}}
+\newcommand{\sRefuted}{\status{REFUTED}}
+\newcommand{\sSuperseded}{\status{SUPERSEDED}}
+\newcommand{\sOpen}{\status{OPEN}}
+\newcommand{\sNotRefuted}{\status{NOT REFUTED}}
+\newcommand{\sToCheck}{\status{TO CHECK}}
+
+% Legend, to print once per document
+\newcommand{\taglegend}{%
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\tSource & Published by the data producer or an official body. The reference is given. \\
+\tObserved & Measured by us. Preliminary. The notebook section is given. Not validated. \\
+\tInterp & Our reading of an observation. At least one alternative reading is given. \\
+\tAssumed & Not tested. A test or a gap ID is given. \\
+\tUnknown & Open gap. A gap ID is given. \\
+\end{tabularx}}

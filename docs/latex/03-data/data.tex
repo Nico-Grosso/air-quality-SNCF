@@ -1,0 +1,187 @@
+\documentclass[11pt]{article}
+\input{preamble}
+\input{regrender}
+\setdoc{Data}{Source discovery, data handling and audit protocol}{v0.1}{Draft -- EDA in progress}{2026-11-27}
+
+\begin{document}
+\makedoctitle
+\tableofcontents
+\clearpage
+
+% =====================================================================
+\section{Purpose}
+This document has two parts.
+Part 1 tells where the data comes from and which other sources exist.
+Part 2 tells how we handle the data and how we audit its quality.
+All numbers from the exploration notebook are \tObserved{} and preliminary (\refid{G-20}).
+
+\taglegend
+
+% =====================================================================
+\part*{Part 1 -- Source discovery}
+\addcontentsline{toc}{part}{Part 1 -- Source discovery}
+
+\section{Why we search for sources}
+The SNCF file is one output of a larger measurement system \tSource{} (search results, \refid{S-01}).
+Other sources can answer our gaps, add stations, or contradict our framing (\refid{D-015}).
+We search for sources that can refute our assumptions, not only for sources that support them.
+
+\section{Search procedure}
+\begin{enumerate}
+  \item Trace the lineage of the dataset: SNCF portal $\rightarrow$ data.gouv.fr mirror $\rightarrow$ producer (SNCF Gares \& Connexions, Île-de-France) $\rightarrow$ measurement partners (Airparif, Agence d'Essai Ferroviaire) $\rightarrow$ coordinator (Île-de-France Mobilités).
+  \item Search these portals: \url{https://ressources.data.sncf.com}, \url{https://www.data.gouv.fr}, \url{https://data.iledefrance-mobilites.fr}, \url{https://data.ratp.fr}, \url{https://www.airparif.fr}, \url{https://www.anses.fr}, \url{https://meteo.data.gouv.fr}.
+  \item Search by station name (Avenue Foch, Sevran Beaudottes, La Défense, Neuilly -- Porte Maillot).
+  \item Search by topic: ``qualité de l'air gares souterraines'', ``enceintes ferroviaires souterraines'', ``EFS''.
+  \item Search for disconfirming evidence: sensor reliability problems, low exposure, no time pattern.
+  \item Record each candidate in \fpath{registers/sources.csv}, also when you reject it. Write the reason.
+  \item Set the decision: USE (this week), LATER (after delivery), REJECT (with reason).
+\end{enumerate}
+
+\section{Status of the search on 2026-11-27}
+We ran three web searches. We tried to read the pages, but the network did not resolve the French sites from our environment.
+So every source below is \sToCheck. The facts in the register come from search result summaries only. They are not read from the pages.
+Read each page and update the register before you use a fact from it.
+
+\textbf{First findings from search results} (to check):
+\begin{itemize}
+  \item SNCF Gares \& Connexions (Île-de-France) monitors air quality in underground rail spaces, with Airparif and the Agence d'Essai Ferroviaire. Avenue Foch (RER C) is one of four permanent stations (\refid{S-01}, \refid{S-03}).
+  \item The data.gouv.fr page shows the licence as ``not specified'' (\refid{S-02}, \refid{G-13}).
+  \item Île-de-France Mobilités published a map of particle levels for about 44 underground stations in 2024, with a yearly update, as open data (\refid{S-05}).
+  \item No legal limit exists for these spaces. ANSES recommendations are used as a reference (\refid{S-05}, \refid{S-09}).
+  \item RATP publishes hourly air data for some of its own stations (\refid{S-08}).
+  \item Airparif reviewed the RATP monitoring system in 2022 and asked for more accessible and more detailed open data (\refid{S-07}).
+\end{itemize}
+
+\section{Source register}
+\subsection{Summary}
+\srcsummary
+\subsection{Entries}
+\srcentries
+
+% =====================================================================
+\part*{Part 2 -- Data handling and audit}
+\addcontentsline{toc}{part}{Part 2 -- Data handling and audit}
+
+\section{Data handling rule}
+\sWorking{} (\refid{D-014}).
+\begin{enumerate}
+  \item The folder \fpath{spark/data/} is the raw zone. Do not write, edit, filter or overwrite files there.
+  \item Add a file to the raw zone only with a documented download step.
+  \item For each raw file, write a manifest entry in \fpath{registers/manifest.csv}.
+  \item If a new download has a different checksum, keep both versions. Use a new file name with the download date.
+  \item Write all processed data to \fpath{spark/lake/}:
+  \begin{itemize}
+    \item \fpath{bronze/}: typed copy of the raw file in Parquet, with ingestion time, source ID and checksum columns.
+    \item \fpath{silver/}: same rows, with quality flag columns. No value is deleted or changed.
+    \item \fpath{gold/}: features and labels for the models.
+  \end{itemize}
+  \item Make each Silver and Gold table reproducible from Bronze with code in the repository.
+\end{enumerate}
+
+\section{Raw file manifest}
+\manifestentries
+
+% =====================================================================
+\section{Data dictionary}
+The table gives each column of \fpath{qualite-de-lair.csv} and the status of each property.
+
+\small
+\begin{longtable}{@{}P{0.13\linewidth} P{0.11\linewidth} P{0.36\linewidth} P{0.32\linewidth}@{}}
+\toprule
+\textbf{Column} & \textbf{Notebook name} & \textbf{Meaning} & \textbf{Status of the properties} \\
+\midrule\endhead
+\bottomrule\endfoot
+Trigramme & code & Three-letter station code (AVF, BDE, DGA, NPT) & Values \tObserved \\
+Date heure & ts & Time of the measurement, ISO 8601 with suffix Z & Format \tObserved. Start or end of hour \tUnknown{} (\refid{G-02}) \\
+PM10 & PM10 & \pmten{} concentration & Unit \ugm{} \tAssumed{} (\refid{G-03}). Averaging \tUnknown{} (\refid{G-01}) \\
+PM25 & PM25 & \pmtwofive{} concentration & Same as PM10 \\
+Nom\_Gare & station & Station name & Values \tObserved \\
+Id\_Gare & station\_id & Station identifier (UUID) & Link to SNCF station referential \tUnknown{} (\refid{G-19}) \\
+\end{longtable}
+\normalsize
+
+Personal data: none \tObserved. The file holds only sensor values, times and station names.
+
+% =====================================================================
+\section{Quality checks}
+Run each check on Bronze. Write the result in Silver as a flag. Write the count per station in the notebook and here.
+
+\small
+\begin{longtable}{@{}P{0.15\linewidth} P{0.3\linewidth} P{0.27\linewidth} P{0.2\linewidth}@{}}
+\toprule
+\textbf{Dimension} & \textbf{Check} & \textbf{Spark method} & \textbf{Flag or gap} \\
+\midrule\endhead
+\bottomrule\endfoot
+Uniqueness & One row for each station and hour & \texttt{groupBy(code, ts).count()} & \texttt{dup\_flag} \\
+Completeness & Missing hours and null values per station; length of null runs & Window with \texttt{lag}, gaps-and-islands & \texttt{gap\_run\_h}, \refid{G-07} \\
+Validity & Negative values & \texttt{filter(col < 0)} & \texttt{neg\_flag} \\
+Consistency & \pmtwofive{} greater than \pmten & column comparison & \texttt{pm25\_gt\_pm10}, \refid{G-09} \\
+Validity & Value equal to 5.0 & equality test, run length & \texttt{at\_floor}, \refid{G-08} \\
+Plausibility & Extreme values (limits to fix with \refid{G-10}) & quantiles per station & \texttt{extreme\_flag} \\
+Plausibility & Same value for many hours & run length of equal values & \texttt{stuck\_flag}, \refid{G-11} \\
+Timeliness & Delay between last timestamp and download & manifest and \texttt{max(ts)} & \refid{G-12} \\
+Coverage & Valid hours per station and year & \texttt{groupBy(code, year)} & \refid{G-18} \\
+\end{longtable}
+\normalsize
+
+% =====================================================================
+\section{Preliminary observations}
+\textbf{EDA in progress -- not validated.} The values come from the saved outputs of the exploration notebook (\fpath{spark/apps/.ipynb_checkpoints/}), not from a fresh run (\refid{G-20}).
+Each interpretation has at least one alternative.
+
+\subsection{Size and coverage} \tObserved{} (notebook sections 1--2)
+\begin{itemize}
+  \item 206\,904 rows, from 2018-01-01 00:00 to 2026-11-25 23:00 (UTC as written in the file).
+  \item No duplicate station and hour. No missing hourly timestamp (the rows exist; values can be null).
+  \item Rows per station: AVF 78\,024, BDE 78\,024 (from 2018), NPT 34\,200 (from 2023), DGA 16\,656 (from 2025).
+\end{itemize}
+
+\subsection{Distributions} \tObserved{} (notebook section 3)
+\begin{itemize}
+  \item \pmten: mean 160.6, median 145.3, maximum 13\,633.79, skewness 10.38.
+  \item \pmtwofive: mean 64.9, median 55.4.
+  \item Correlation \pmten{} and \pmtwofive: 0.927. Median ratio \pmtwofive/\pmten: 0.41.
+\end{itemize}
+
+\subsection{Quality} \tObserved{} (notebook section 4)
+\begin{itemize}
+  \item Null values: \pmten{} 15.04\,\%, \pmtwofive{} 15.85\,\%. Between 89\,\% and 94\,\% of nulls are in runs of 24 hours or more. Longest run: 3\,761 hours (BDE).
+  \item Negative values: 19 rows for \pmten, 19 rows for \pmtwofive{} (31 rows with one or both).
+  \item \pmtwofive{} greater than \pmten: 2\,793 rows.
+  \item Value exactly 5.0: 1\,085 rows (\pmten), 4\,149 rows (\pmtwofive).
+  \item \pmten{} greater than 1000: 62 rows.
+  \item BDE: \pmten{} equal to 5.0 for 121 hours, from 2024-12-27 to 2025-01-01.
+\end{itemize}
+\textbf{Interpretations and alternatives.}
+\begin{itemize}
+  \item 5.0 is a sensor floor value \tInterp. Alternative: a default value written by the data system during a fault. Gap \refid{G-08}.
+  \item The 121 hours at 5.0 are a stuck sensor \tInterp. Alternative: a real low period during the holiday break with reduced service. Gap \refid{G-11}.
+  \item Values above 1000 are faults \tInterp. Alternative: real events (works, incidents, cleaning). Gap \refid{G-10}.
+\end{itemize}
+
+\subsection{Time patterns} \tObserved{} (notebook section 5)
+\begin{itemize}
+  \item Weekend median \pmten{} is lower than weekday median: AVF $-29$\,\%, DGA $-28$\,\%, NPT $-46$\,\%, BDE $-17$\,\%.
+\end{itemize}
+\textbf{Interpretation and alternatives.}
+The notebook reads this as a rail-traffic signal \tInterp.
+Alternatives: ventilation schedule; outdoor road traffic; outdoor PM levels; maintenance or cleaning schedule; station occupancy (people move dust).
+Hypothesis \refid{H-08} tests this. Gap \refid{G-16} lists the data needed.
+
+\subsection{Candidate flag rules} \sProposed{} (\refid{D-009})
+The notebook proposes these rules. They become flags, not deletions. Each depends on a gap.
+\begin{itemize}
+  \item Negative value $\rightarrow$ \texttt{neg\_flag}.
+  \item \pmtwofive{} greater than \pmten{} $\rightarrow$ \texttt{pm25\_gt\_pm10} on both values (\refid{G-09}).
+  \item Value 5.0 $\rightarrow$ \texttt{at\_floor} (\refid{G-08}).
+  \item \pmten{} above 1000 or \pmtwofive{} above 500 $\rightarrow$ \texttt{extreme\_flag} (\refid{G-10}). The limits are not justified yet.
+\end{itemize}
+
+\subsection{Known issues in the notebook}
+\begin{itemize}
+  \item A cell runs the heat map for BDE (Sevran Beaudottes), but its comment says ``Avenue Foch''.
+  \item The summary says that the data has no coordinates. The file \fpath{spark/data/stations.csv} now has coordinates (origin: \refid{G-21}).
+  \item The main notebook has no saved outputs. The numbers above come from the checkpoint copy (\refid{G-20}).
+\end{itemize}
+
+\end{document}

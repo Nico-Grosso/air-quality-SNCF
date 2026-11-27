@@ -1,0 +1,31 @@
+% Shared names, units and paths.
+\newcommand{\projectname}{Station Air Risk}
+\newcommand{\projectrepo}{air-quality-SNCF}
+\newcommand{\course}{DaSci -- UE IBDS -- Big Data Project (Spark)}
+\newcommand{\teamnames}{Nicolas Grosso \and Oziel Ferreira da Silva}
+\newcommand{\deliverydate}{2026-12-04}
+
+% Units and pollutants
+\newcommand{\ugm}{\textmu g/m\textsuperscript{3}}
+\newcommand{\pmten}{PM\textsubscript{10}}
+\newcommand{\pmtwofive}{PM\textsubscript{2.5}}
+
+% Paths (relative to docs/, where latexmk runs)
+\newcommand{\registerdir}{registers}
+\newcommand{\fpath}[1]{\nolinkurl{#1}}
+
+% Cross-reference to a register entry (gap, hypothesis, decision, source)
+\newcommand{\refid}[1]{\textsf{\textbf{#1}}}
+
+% Document metadata, set in each document with \setdoc
+\newcommand{\doctitle}{}
+\newcommand{\docsubtitle}{}
+\newcommand{\docversion}{}
+\newcommand{\docstatus}{}
+\newcommand{\docdate}{}
+\newcommand{\setdoc}[5]{%
+  \renewcommand{\doctitle}{#1}%
+  \renewcommand{\docsubtitle}{#2}%
+  \renewcommand{\docversion}{#3}%
+  \renewcommand{\docstatus}{#4}%
+  \renewcommand{\docdate}{#5}}

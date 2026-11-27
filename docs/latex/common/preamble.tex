@@ -1,0 +1,45 @@
+% Shared preamble for all project documents.
+% Load with \input{preamble} after \documentclass.
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage{microtype}
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{csvsimple}
+\usepackage{tikz}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{xurl}
+\usepackage[hidelinks]{hyperref}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlength{\emergencystretch}{3em}
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\titleformat{\section}{\Large\sffamily\bfseries\color{projblue}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\large\sffamily\bfseries}{\thesubsection}{0.8em}{}
+\titleformat{\subsubsection}{\normalsize\sffamily\bfseries}{\thesubsubsection}{0.8em}{}
+
+\definecolor{projblue}{HTML}{1F4E79}
+
+\input{macros}
+\input{tags}
+\input{titlepage}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily \projectname}
+\fancyhead[R]{\small\sffamily \doctitle}
+\fancyfoot[L]{\small\sffamily \docversion\ -- \docstatus}
+\fancyfoot[R]{\small\sffamily \thepage}
+\renewcommand{\headrulewidth}{0.4pt}

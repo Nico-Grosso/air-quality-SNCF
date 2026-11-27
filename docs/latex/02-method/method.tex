@@ -1,0 +1,239 @@
+\documentclass[11pt]{article}
+\input{preamble}
+\setdoc{Method}{How we work: evidence rules, bias control, phases}{v0.1}{Draft -- EDA in progress}{2026-11-27}
+
+\begin{document}
+\makedoctitle
+\tableofcontents
+\clearpage
+
+% =====================================================================
+\section{Purpose}
+This document gives the procedure that the team follows from framing to delivery.
+The procedure is more important than any single result: a result is only as good as the procedure that produced it.
+Each phase has questions, inputs, activities, a deliverable and an exit criterion.
+
+% =====================================================================
+\section{Evidence rules}
+\subsection{Evidence tags}
+Each statement of fact in the project documents has one tag.
+
+\taglegend
+
+\subsection{Falsification instead of confirmation}
+\begin{enumerate}
+  \item Write each hypothesis as a claim that a test can refute.
+  \item Write a rival hypothesis for each claim. The rival is a real alternative, not a weak version of the claim.
+  \item Write the refutation test and the result that refutes the claim \emph{before} you run the test.
+  \item Run the test. Record the result in the register, also if the claim is refuted.
+  \item Use the status \status{NOT REFUTED} when the test does not refute the claim. Never use ``confirmed''.
+  \item If a test cannot fail, it is not a test. Change the test or keep the status \status{OPEN} and say why.
+\end{enumerate}
+
+\subsection{Decision lifecycle with rivals}
+Each decision has the status \sWorking{} and at least one rival with the status \sProposed.
+
+\begin{center}
+\begin{tikzpicture}[node distance=4.6cm, every node/.style={font=\small\sffamily}]
+  \node[draw, rounded corners, fill=projblue!8] (w) {WORKING};
+  \node[draw, rounded corners, fill=tagunknown!8, right of=w] (r) {REFUTED};
+  \node[draw, rounded corners, fill=projblue!8, right of=r] (n) {new WORKING};
+  \node[draw, rounded corners, fill=gray!10, below of=w, yshift=3cm] (p) {PROPOSED (rival)};
+  \draw[->] (w) -- node[above, font=\scriptsize] {evidence negated} (r);
+  \draw[->] (r) -- node[above, font=\scriptsize] {evaluate rivals} (n);
+  \draw[->, dashed] (p) -| node[below, pos=0.25, font=\scriptsize] {evaluated} (n);
+\end{tikzpicture}
+\end{center}
+
+\begin{enumerate}
+  \item A working decision stays in use while the evidence for it is not negated.
+  \item Each decision has a written switch condition (the ``refutation'' field in the register).
+  \item When the switch condition occurs, set the decision to \sRefuted. Evaluate the rivals with the same rules. Record the new decision with a new ID and a link to the old one.
+  \item Do not delete a rival when it is not used. A rival can become the working decision later.
+\end{enumerate}
+
+\subsection{Fix the rules before the results}
+Before modelling, fill the pre-registration sheet (Section~\ref{sec:prereg}). Sign and date it. Commit it.
+After this, these changes are logged with a reason and a date: metric, baseline, split date, threshold method, failure line, hyperparameter search space.
+The test period is used one time, at the end. If it is used again, the report says so and gives the reason.
+
+% =====================================================================
+\section{Bias checklist}
+Use this list at the end of each phase. Write the result in the phase deliverable.
+
+\small
+\begin{longtable}{@{}P{0.18\linewidth} P{0.38\linewidth} P{0.38\linewidth}@{}}
+\toprule
+\textbf{Bias} & \textbf{Where it can enter this project} & \textbf{Counter-measure} \\
+\midrule\endhead
+\bottomrule\endfoot
+Confirmation & We look only for evidence that supports the product idea. & Rival for each claim. Search for disconfirming sources (\refid{S-07}, \refid{S-14}). \\
+Anchoring & The first threshold (75th percentile) or the first model becomes the default. & Rival thresholds in \refid{D-003}. Sensitivity analysis. \\
+HARKing (hypotheses after results) & A pattern found in EDA becomes a ``hypothesis'' that it already supports. & Hypotheses from EDA are tested on a period that EDA did not use, or are marked as exploratory. \\
+Forking paths & Many feature sets or models are tried; only the best one is reported. & Pre-registration. Log every run. Report the number of tries. \\
+Look-ahead and target leakage & Rolling means include the target hour. Threshold uses test data. Imputer fit on all data. & Past-only windows. Fit every stage on training data. Leakage check (Section~\ref{sec:leak}). \\
+Selection and survivorship & 4 stations chosen by the producer. Periods with outages are dropped silently. & Note in the 5W2H. \refid{G-17}, \refid{H-05}. Flags instead of deletion (\refid{D-009}). \\
+Availability & We use only the data we already have because it is easy. & Source search (\refid{D-015}). \\
+Sunk cost & We keep a framing because we worked on it. & Switch conditions written before the work (\refid{D-001}). \\
+Narrative & The talk tells a clean story and hides weak points. & Talk shows baselines, per-station results, refuted hypotheses. \\
+Automation & People trust model output over data quality. & Data-trust flag shown next to each class. \\
+\end{longtable}
+\normalsize
+
+% =====================================================================
+\section{Phases}
+The phases follow CRISP-DM, adapted to the course brief and to the README checklist.
+A later phase can open an earlier one again. When this occurs, record the reason in the decision log.
+
+\newcommand{\phase}[6]{%
+\subsection{#1}
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\textbf{Questions} & #2 \\
+\textbf{Inputs} & #3 \\
+\textbf{Activities} & #4 \\
+\textbf{Deliverable} & #5 \\
+\textbf{Exit criterion} & #6 \\
+\end{tabularx}}
+
+\phase{Phase 1 -- Frame}
+{Who needs what, and why? What can refute the idea?}
+{Course brief, first look at the data.}
+{Write the charter, the 5W2H, the first gaps, hypotheses and decisions with rivals.}
+{\fpath{product-charter.pdf}, registers.}
+{Each working decision has a rival and a switch condition.}
+
+\phase{Phase 2 -- Discover sources and understand the data}
+{Where does the data come from? What does one value mean? What other data exists?}
+{Source register, producer pages, reports.}
+{Trace the data lineage. Search the portals. Search for disconfirming sources. Fill the source grid. Write the raw file manifest.}
+{\fpath{data.pdf} part 1, updated gaps.}
+{Gaps \refid{G-01} to \refid{G-03} and \refid{G-13} are closed, or their impact is written.}
+
+\phase{Phase 3 -- Audit and flag}
+{Which values are doubtful, and why? Is missing data random?}
+{Raw files (read only), manifest.}
+{Write Bronze (typed copy). Run the quality checks of the audit protocol. Add flags in Silver. Do not delete.}
+{Silver data in \fpath{spark/lake/silver/}, audit results in \fpath{data.pdf} part 2.}
+{Each quality rule has a count per station and a linked gap.}
+
+\phase{Phase 4 -- Explore}
+{What patterns exist? What alternative explanations exist for each one?}
+{Silver data.}
+{Profiles per station and period. For each pattern, write at least one alternative explanation. Use the training period only for patterns that become hypotheses.}
+{Notebook sections, new or updated hypotheses.}
+{Each interpretation in the notebook has an alternative and a tag.}
+
+\phase{Phase 5 -- Fix the evaluation protocol}
+{How will we decide if a model is useful?}
+{Registers, \refid{D-003} to \refid{D-007}.}
+{Fill the pre-registration sheet. Sign, date and commit it.}
+{Pre-registration sheet.}
+{Commit exists before the first model run.}
+
+\phase{Phase 6 -- Build features}
+{Which inputs are available at prediction time for each mode?}
+{Silver data, pre-registration.}
+{Calendar features. Lags and rolling means with past values only. Labels from the training threshold.}
+{Gold data in \fpath{spark/lake/gold/}.}
+{Leakage check passes (Section~\ref{sec:leak}).}
+
+\phase{Phase 7 -- Model}
+{Do the models do better than the baselines on validation?}
+{Gold data.}
+{Fit the baselines first. Fit the Spark ML Pipelines (both algorithms, both modes). Tune on the validation period only. Log every run.}
+{Run log, chosen configuration for each model.}
+{Configurations frozen and committed.}
+
+\phase{Phase 8 -- Evaluate}
+{What is the result on data that no step has used?}
+{Frozen configurations, test period.}
+{Run the evaluation one time. Compute metrics per station. Compare with baselines. Update the hypothesis statuses.}
+{Results table, updated registers.}
+{Every pre-registered test has a status.}
+
+\phase{Phase 9 -- Communicate}
+{What can a user trust, and what not?}
+{Results, registers.}
+{Write the talk (7 minutes): problem (1), data and gaps (1.5), pipeline (2), results with baselines and refuted hypotheses (1.5), limits and next steps (1). Prepare answers for 5 minutes of questions.}
+{Slides, notebook, updated documents.}
+{Go or no-go criteria of the charter are met.}
+
+% =====================================================================
+\section{Pre-registration sheet}
+\label{sec:prereg}
+Fill this sheet before Phase 7. Copy it into the notebook as the first markdown cell of the modelling section.
+
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\toprule
+\textbf{Item} & \textbf{Value (fill before modelling)} \\
+\midrule
+Date and commit & \\
+Hypotheses tested & \refid{H-01}, \refid{H-02}, \ldots{} with their refutation lines \\
+Target and threshold method & \refid{D-003} \\
+Horizons & \refid{D-004} \\
+Split dates & \refid{D-005} \\
+Primary metric & \refid{D-006} \\
+Guardrail metrics & \refid{D-006} \\
+Baselines & \refid{D-006} \\
+Margins (minimum gain over baseline) & \\
+Failure line & \\
+Algorithms and search space & \refid{D-007} \\
+Flags excluded from training & \refid{D-009} \\
+Seeds & \\
+\bottomrule
+\end{tabularx}
+
+% =====================================================================
+\section{Leakage rules}
+\label{sec:leak}
+\begin{enumerate}
+  \item Split by time before any fit. Training before validation before test.
+  \item Compute the class threshold on training data only.
+  \item Fit every Spark ML stage (\texttt{Imputer}, \texttt{StringIndexer}, \texttt{StandardScaler}, models) on training data only, inside the Pipeline.
+  \item Use window frames that end at the hour before the prediction time: \texttt{rowsBetween(-k, -1)} or a range frame on time.
+  \item For horizon $h$, use only inputs that exist at time $t$ to predict $t+h$.
+  \item Do not fill missing values with data from the future (no backward fill, no centred interpolation).
+  \item Check: shuffle the target in time. If the model still does better than the baseline, look for leakage.
+\end{enumerate}
+
+% =====================================================================
+\section{Data handling rule}
+\begin{enumerate}
+  \item Treat \fpath{spark/data/} as a raw zone. Do not write, edit, filter or overwrite files there.
+  \item Add a file to the raw zone only with a documented download step. Write a manifest entry (see \fpath{data.pdf}).
+  \item Write all processed data to \fpath{spark/lake/} (Bronze, Silver, Gold).
+  \item Flag doubtful values. Do not delete them.
+  \item Make each processing step reproducible from Bronze.
+\end{enumerate}
+\textbf{Proposed enforcement} \sProposed: mount \fpath{./data} as read-only and add a writable \fpath{./lake} mount in \fpath{spark/docker-compose.yml}. This change needs team approval.
+
+% =====================================================================
+\section{Traceability}
+Each item of work links a need to a decision. Use the IDs in notebook markdown cells and in commit messages.
+
+\begin{tabularx}{\linewidth}{@{}X X X X X@{}}
+\toprule
+\textbf{Need} & \textbf{Question} & \textbf{Gap or hypothesis} & \textbf{Analysis} & \textbf{Decision} \\
+\midrule
+Warning before exposure & Are levels predictable? & \refid{H-01}, \refid{H-02} & Notebook, modelling & \refid{D-001}, \refid{D-004} \\
+Meaningful class & What is ``high''? & \refid{G-14}, \refid{H-06} & Sources, Silver counts & \refid{D-003} \\
+Trust in data & Which values are doubtful? & \refid{G-07} to \refid{G-11}, \refid{H-07} & Notebook section 4 & \refid{D-009} \\
+Fair evaluation & Which metric fits the users? & \refid{G-15} & Sources, users & \refid{D-006} \\
+Generalisation & Do results apply to other stations? & \refid{G-17}, \refid{H-05} & Leave-one-station-out & \refid{D-001} \\
+Course brief & Is the chain complete? & -- & Notebook & \refid{D-007}, \refid{D-008} \\
+\bottomrule
+\end{tabularx}
+
+% =====================================================================
+\section{Reproducibility}
+\begin{itemize}
+  \item Read CSV files with an explicit schema. Do not infer types.
+  \item Set the Spark session time zone to UTC.
+  \item Fix all random seeds. Keep \texttt{PYTHONHASHSEED=1} (\fpath{spark/Dockerfile}).
+  \item Run the full notebook from a clean clone in the container before each delivery.
+  \item Record the git commit and the raw file checksum with each result.
+\end{itemize}
+
+\clearpage
+\input{glossary}
+\end{document}

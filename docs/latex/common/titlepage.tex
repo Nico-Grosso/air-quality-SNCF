@@ -1,0 +1,26 @@
+% Shared title block. Call \makedoctitle after \setdoc{...}.
+\newcommand{\makedoctitle}{%
+\begin{titlepage}
+  \sffamily
+  \vspace*{2cm}
+  {\large\color{projblue} \course\par}
+  \vspace{1.2cm}
+  {\Huge\bfseries \projectname\par}
+  \vspace{0.4cm}
+  {\LARGE \doctitle\par}
+  \vspace{0.3cm}
+  {\large \docsubtitle\par}
+  \vfill
+  \begin{tabular}{@{}ll@{}}
+    Team & Nicolas Grosso, Oziel Ferreira da Silva \\
+    Repository & \texttt{\projectrepo} \\
+    Version & \docversion \\
+    Status & \docstatus \\
+    Date & \docdate \\
+    Delivery & \deliverydate \\
+  \end{tabular}
+  \vspace{1cm}
+
+  {\small This document is written in ASD-STE100 Simplified Technical English for most of its text.
+  Some rationale text uses standard English. See the writing rules in the Product Charter, Appendix A.\par}
+\end{titlepage}}

@@ -17,7 +17,7 @@ services:
     ports:
       - "9080:8080"      # Spark Master Web UI
       - "7077:7077"      # Spark Master
-      - "4040:4040"      # Spark Application UI
+      - "4040-4045:4040-4045"  # Spark Application UI (4041+ when several sessions run)
       - "8888:8888"      # JupyterLab
 
     volumes:

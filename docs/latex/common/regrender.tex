@@ -1,0 +1,104 @@
+% Render the CSV registers in docs/registers/.
+% The CSV files are the single source of truth. Edit them, then run make.
+% Separator: semicolon. All TeX special characters in the CSV are printed as text.
+\csvset{
+  register/.style={separator=semicolon, respect all},
+}
+
+\newcommand{\entryhead}[3]{%
+  \par\medskip\noindent
+  \colorbox{projblue!8}{\parbox{\dimexpr\linewidth-2\fboxsep}{%
+    \sffamily\bfseries #1\quad #2\hfill\status{#3}}}\par\nopagebreak}
+\newcommand{\field}[2]{\par\noindent\hangindent=1.5em\hangafter=0\textsf{\textbf{#1.}} #2}
+\newcommand{\csvurl}[1]{\expandafter\url\expandafter{#1}}
+
+% ---------- Summary tables ----------
+\newcommand{\gapsummary}{%
+  \csvreader[register, longtable={@{}l l P{0.58\linewidth} l@{}},
+    table head={\toprule \textsf{\textbf{ID}} & \textsf{\textbf{Topic}} & \textsf{\textbf{Question}} & \textsf{\textbf{Status}}\\\midrule\endhead},
+    table foot={\bottomrule}]{\registerdir/gaps.csv}%
+    {1=\cid,2=\ctopic,3=\cq,7=\cstatus}{\cid & \ctopic & \cq & \cstatus}}
+
+\newcommand{\hypsummary}{%
+  \csvreader[register, longtable={@{}l l P{0.55\linewidth} l@{}},
+    table head={\toprule \textsf{\textbf{ID}} & \textsf{\textbf{Name}} & \textsf{\textbf{Claim}} & \textsf{\textbf{Status}}\\\midrule\endhead},
+    table foot={\bottomrule}]{\registerdir/hypotheses.csv}%
+    {1=\cid,2=\cname,3=\cclaim,7=\cstatus}{\cid & \cname & \cclaim & \cstatus}}
+
+\newcommand{\decsummary}{%
+  \csvreader[register, longtable={@{}l P{0.65\linewidth} l@{}},
+    table head={\toprule \textsf{\textbf{ID}} & \textsf{\textbf{Decision}} & \textsf{\textbf{Status}}\\\midrule\endhead},
+    table foot={\bottomrule}]{\registerdir/decisions.csv}%
+    {1=\cid,3=\cstatus,4=\ctitle}{\cid & \ctitle & \cstatus}}
+
+\newcommand{\srcsummary}{%
+  \csvreader[register, longtable={@{}l P{0.5\linewidth} P{0.2\linewidth} P{0.13\linewidth}@{}},
+    table head={\toprule \textsf{\textbf{ID}} & \textsf{\textbf{Source}} & \textsf{\textbf{Serves}} & \textsf{\textbf{Decision}}\\\midrule\endhead},
+    table foot={\bottomrule}]{\registerdir/sources.csv}%
+    {1=\cid,2=\cname,15=\cserves,16=\cdec}{\cid & \cname & \cserves & \cdec}}
+
+% ---------- Full entries ----------
+\newcommand{\gapentries}{%
+  \csvreader[register]{\registerdir/gaps.csv}%
+    {1=\cid,2=\ctopic,3=\cq,4=\cwhy,5=\ccheck,6=\csrc,7=\cstatus,8=\cres,9=\cupd}%
+    {\entryhead{\cid}{\ctopic}{\cstatus}
+     \field{Question}{\cq}
+     \field{Why it matters}{\cwhy}
+     \field{How to check}{\ccheck}
+     \field{Sources}{\csrc}
+     \field{Result}{\cres}
+     \field{Updated}{\cupd}}}
+
+\newcommand{\hypentries}{%
+  \csvreader[register]{\registerdir/hypotheses.csv}%
+    {1=\cid,2=\cname,3=\cclaim,4=\crival,5=\ctest,6=\crefif,7=\cstatus,8=\cres,9=\cdec,10=\cupd}%
+    {\entryhead{\cid}{\cname}{\cstatus}
+     \field{Claim}{\cclaim}
+     \field{Rival}{\crival}
+     \field{Refutation test}{\ctest}
+     \field{Refuted if}{\crefif}
+     \field{Result}{\cres}
+     \field{Linked decisions}{\cdec}
+     \field{Updated}{\cupd}}}
+
+\newcommand{\decentries}{%
+  \csvreader[register]{\registerdir/decisions.csv}%
+    {1=\cid,2=\cdate,3=\cstatus,4=\ctitle,5=\cctx,6=\cdec,7=\crivals,8=\cevid,9=\cref,10=\ccons}%
+    {\entryhead{\cid}{\ctitle}{\cstatus}
+     \field{Date}{\cdate}
+     \field{Context}{\cctx}
+     \field{Working decision}{\cdec}
+     \field{Rivals}{\crivals}
+     \field{Evidence now}{\cevid}
+     \field{Refutation or switch condition}{\cref}
+     \field{Consequences}{\ccons}}}
+
+\newcommand{\srcentries}{%
+  \csvreader[register]{\registerdir/sources.csv}%
+    {1=\cid,2=\cname,3=\cprod,4=\curl,5=\clic,6=\cfmt,7=\cspan,8=\cgran,9=\cstat,10=\cvars,11=\cupd,12=\ckey,13=\cqual,14=\ceff,15=\cserves,16=\cdec,17=\creason,18=\cchecked}%
+    {\entryhead{\cid}{\cname}{\cdec}
+     \field{Producer}{\cprod}
+     \field{URL}{\csvurl{\curl}}
+     \field{Licence}{\clic}
+     \field{Format}{\cfmt}
+     \field{Time span / step}{\cspan\ / \cgran}
+     \field{Stations}{\cstat}
+     \field{Variables}{\cvars}
+     \field{Update frequency}{\cupd}
+     \field{Join key}{\ckey}
+     \field{Quality notes}{\cqual}
+     \field{Integration effort}{\ceff}
+     \field{Serves}{\cserves}
+     \field{Reason}{\creason}
+     \field{Checked}{\cchecked}}}
+
+\newcommand{\manifestentries}{%
+  \csvreader[register]{\registerdir/manifest.csv}%
+    {1=\cfile,2=\csrc,3=\cret,4=\clic,5=\csha,6=\cbytes,7=\crows,8=\ccols,9=\cnotes}%
+    {\entryhead{\cfile}{}{\csrc}
+     \field{Retrieved}{\cret}
+     \field{Licence}{\clic}
+     \field{SHA-256}{{\footnotesize\ttfamily\csha}}
+     \field{Size}{\cbytes\ bytes, \crows}
+     \field{Columns}{\ccols}
+     \field{Notes}{\cnotes}}}

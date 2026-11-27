@@ -1,0 +1,27 @@
+% Shared glossary. One meaning for each term in all documents.
+\section*{Glossary}
+\addcontentsline{toc}{section}{Glossary}
+\begingroup\raggedright
+\begin{description}[style=nextline,leftmargin=1.5em,font=\sffamily\bfseries]
+  \item[\pmten, \pmtwofive] Mass concentration of particles with a diameter of 10\,\textmu m or less (\pmten) and 2.5\,\textmu m or less (\pmtwofive), in \ugm.
+  \item[EFS] \emph{Enceintes ferroviaires souterraines}. Underground rail spaces: platforms, halls and corridors of underground stations.
+  \item[Station] In these documents, an SNCF rail station with a permanent air-quality sensor. Code: three letters (for example AVF).
+  \item[Risk class] The output of the product: \emph{high} or \emph{not high} for one station and one hour.
+  \item[Short-term mode] The product mode that predicts the risk class for the next 1 to 24 hours. It uses recent readings.
+  \item[Outlook mode] The product mode that predicts the risk class for the next weeks or months. It uses calendar and station data only.
+  \item[Raw zone] The folder \fpath{spark/data/}. It holds source files as downloaded. Nobody changes these files.
+  \item[Bronze, Silver, Gold] Layers of the processed data store. Bronze: typed copy of raw data. Silver: validated data with quality flags. Gold: features for the models.
+  \item[Flag] A column that marks a value as doubtful. A flag does not delete or change the value.
+  \item[Transformer] A Spark ML stage that changes a DataFrame into another DataFrame (for example \texttt{VectorAssembler}).
+  \item[Estimator] A Spark ML stage that learns from data and gives a Transformer (for example \texttt{LogisticRegression}).
+  \item[Pipeline] A Spark ML sequence of Transformers and Estimators that is fitted as one unit.
+  \item[Baseline] A simple rule that a model must do better than (for example: next hour has the same class as this hour).
+  \item[Leakage] Use of information that is not available at prediction time. Leakage gives results that are too good.
+  \item[Hypothesis] A claim that a test can refute. Each hypothesis has a rival and a refutation test.
+  \item[Rival] An alternative claim or decision. It stays in the register while the working option is in use.
+  \item[Refutation test] A test, written before we run it, with a result that shows the claim is false.
+  \item[Working decision] The decision in use now. It stays in use while its evidence is not refuted.
+  \item[Pre-registration] A dated record of metrics, splits, baselines and failure lines, made before modelling.
+  \item[Gap] A question that we must answer, or a fact that we do not know.
+\end{description}
+\endgroup

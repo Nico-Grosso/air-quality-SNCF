@@ -1,0 +1,64 @@
+\documentclass[11pt]{article}
+\input{preamble}
+\input{regrender}
+\setdoc{Registers}{Gaps, hypotheses and decisions}{v0.1}{Living document -- EDA in progress}{2026-11-27}
+
+\begin{document}
+\makedoctitle
+\tableofcontents
+\clearpage
+
+\section{How to use the registers}
+This document shows three registers. Each register is a CSV file in \fpath{docs/registers/}.
+The CSV file is the single source of truth. Do not copy register text into other documents. Use the ID.
+
+\begin{enumerate}
+  \item Open the CSV file in a text editor or a spreadsheet tool.
+  \item Use a semicolon as the separator. Do not use semicolons or double quotes in the text.
+  \item Add a new row with the next free ID. Do not reuse an ID.
+  \item Do not delete a row. Change its status and write the reason in the result field.
+  \item Write the date of the change in the \emph{updated} field (format YYYY-MM-DD).
+  \item Run \texttt{make} in \fpath{docs/}. The PDFs show the new rows.
+\end{enumerate}
+
+\subsection{Status values}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Register} & \textbf{Status values and meaning} \\
+\midrule
+Gaps & \status{OPEN}: no answer. \status{CHECKING}: work in progress. \status{CLOSED}: answer recorded in the result field, with its source. \\
+Hypotheses & \status{OPEN}: not tested. \status{NOT REFUTED}: the test ran and did not refute the claim. This is not a proof. \status{REFUTED}: the test refuted the claim. \\
+Decisions & \sWorking: in use while its evidence is not refuted. \sProposed: a rival, kept for a switch. \sRefuted: the switch condition occurred. \sSuperseded: replaced by a later decision (give its ID). \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Rules that protect against bias}
+\begin{itemize}
+  \item Write the refutation test and the ``refuted if'' line \emph{before} you run the test. Do not change them after you see the result. If a change is necessary, add a new hypothesis ID and give the reason.
+  \item A hypothesis has no ``confirmed'' status. A test can only fail to refute it.
+  \item Each working decision has at least one rival. Keep the rival in the register.
+  \item Record refuted hypotheses and rejected options with the same detail as the others.
+\end{itemize}
+
+\clearpage
+\section{Gaps}
+\subsection{Summary}
+\gapsummary
+\subsection{Entries}
+\gapentries
+
+\clearpage
+\section{Hypotheses}
+\subsection{Summary}
+\hypsummary
+\subsection{Entries}
+\hypentries
+
+\clearpage
+\section{Decision log}
+\subsection{Summary}
+\decsummary
+\subsection{Entries}
+\decentries
+
+\end{document}

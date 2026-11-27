@@ -36,7 +36,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
         "tornado>=6.4,<7" \
         findspark \
         pyarrow \
-        scales
+        scales \
+        folium
 
 # ============================================================
 # Variables Spark

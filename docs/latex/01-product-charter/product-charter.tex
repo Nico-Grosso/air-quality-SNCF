@@ -1,0 +1,393 @@
+\documentclass[11pt]{article}
+\input{preamble}
+\setdoc{Product Charter}{Problem, product, 5W2H, objectives and constraints}{v0.1}{Draft -- EDA in progress}{2026-11-27}
+
+\begin{document}
+\makedoctitle
+\tableofcontents
+\clearpage
+
+% =====================================================================
+\section{Purpose of this document}
+This document defines the product, its users, its objectives and its constraints.
+It is the reference for all project work until the delivery on \deliverydate.
+
+The document does not give results. It gives the questions, the working decisions and the tests that can refute them.
+The registers document (\fpath{registers.pdf}) holds the full text of each gap (\refid{G-xx}), hypothesis (\refid{H-xx}) and decision (\refid{D-xxx}).
+The data document (\fpath{data.pdf}) holds the sources (\refid{S-xx}) and the data audit.
+The method document (\fpath{method.pdf}) gives the procedure that we follow.
+
+% =====================================================================
+\section{How to read the evidence in this document}
+\subsection{Evidence tags}
+Each statement of fact has one tag.
+
+\taglegend
+
+\subsection{Rules that we apply}
+\begin{enumerate}
+  \item We write each hypothesis with a rival and a refutation test. We write the test \emph{before} we run it.
+  \item Each decision is a \emph{working} decision with at least one rival. The working decision stays in use while its evidence is not refuted. When the evidence is refuted, we evaluate the rival and we log the change.
+  \item No result has the status ``confirmed''. A test can only fail to refute a claim.
+  \item We fix metrics, baselines, split dates and failure lines before modelling. We use the test period one time.
+  \item We report refuted hypotheses, rejected sources and models that fail, with the same detail as the others.
+  \item We look for sources that can contradict our framing, not only for sources that agree with it.
+  \item We never change the source files in \fpath{spark/data/} (\refid{D-014}).
+\end{enumerate}
+The method document gives the full rules and a bias checklist.
+
+\subsection{Status of the numbers}
+The exploration notebook (\fpath{spark/apps/data_exploration.ipynb}) is not finished.
+All numbers from it are \tObserved{} and preliminary. They come from a saved copy of the notebook outputs, which can be out of date (\refid{G-20}).
+They are inputs to tests. They are not results.
+
+% =====================================================================
+\section{Problem statement}
+\textbf{Working statement} \tAssumed.
+People who use or work in some underground rail stations of Île-de-France can be exposed to particle (\pmten, \pmtwofive) levels that are important for health.
+SNCF publishes hourly measurements as open data. The measurements describe the past.
+No public service tells a station manager, a station agent or a traveller \emph{before} a period of high levels.
+
+\textbf{Rival statement.}
+The exposure is short or low, so a warning has little value. Or the levels are not predictable enough for a warning to be useful.
+
+\textbf{Tests.}
+\refid{H-06} tests the exposure level against a health reference (\refid{G-14}).
+\refid{H-01} and \refid{H-02} test if the levels are predictable.
+
+\textbf{Facts that we have now.}
+\begin{itemize}
+  \item \tSource{} (search results, 2026-11-27, to read in full): SNCF, with Airparif and the Agence d'Essai Ferroviaire, operates permanent measurement stations in underground rail spaces of Île-de-France (\refid{S-01}).
+  \item \tSource{} (search results, to read in full): no legal limit exists for air quality in underground rail spaces. ANSES recommendations are used as a reference (\refid{S-05}, \refid{S-09}).
+  \item \tObserved{} (notebook section 3, \refid{G-20}): median \pmten{} on all stations and hours is approximately 145\,\ugm. We do not know yet what one value represents (\refid{G-01}). So we do not compare this value with any reference now.
+\end{itemize}
+
+% =====================================================================
+\section{Product proposal: \projectname}
+\subsection{Working product}
+\sWorking{} (\refid{D-001}, \refid{D-002}).
+\projectname{} gives a \emph{risk class} (high or not high) for each station and each hour.
+It also gives a \emph{data-trust flag} that tells if recent data from the sensor is reliable.
+One Spark pipeline supplies two candidate modes:
+
+\begin{tabularx}{\linewidth}{@{}l l X l@{}}
+\toprule
+\textbf{Mode} & \textbf{Horizon} & \textbf{Inputs} & \textbf{Depends on} \\
+\midrule
+Short-term & next 1 to 24 hours & recent readings, calendar, station & \refid{H-02} \\
+Outlook & next weeks to months & calendar and station only & \refid{H-01} \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Each mode stays in the product only while its hypothesis is not refuted.}
+If \refid{H-01} is refuted, we remove the outlook mode. If \refid{H-02} is refuted, we remove the short-term mode.
+The target class (\refid{D-003}) and the horizons (\refid{D-004}) are working decisions with rivals.
+
+\subsection{Rival framings}
+We keep these rival products in the decision log (\refid{D-001}). We evaluate them if the working product is refuted:
+\begin{itemize}
+  \item R1: predict the \pmten{} level (regression), then apply a threshold.
+  \item R2: a data-quality product that detects outages, stuck sensors and doubtful values.
+  \item R3: a comparison product that ranks stations and periods.
+\end{itemize}
+
+% =====================================================================
+\section{5W2H}
+For each question we give: the current answer with its tag, the rival answer, and the open gaps.
+The answers describe the product and its users. They do not describe team tasks.
+
+\subsection{WHAT -- What does the product do?}
+\textbf{Current answer.} \tAssumed{}
+\begin{itemize}
+  \item It gives a table of risk classes: one row for each station and each hour, for the next 24 hours.
+  \item It gives an outlook: expected high-risk hours for each week of the next months, shown as a calendar heat map.
+  \item It gives a data-trust flag for each station, from the quality flags of the recent data.
+\end{itemize}
+\textbf{Out of scope.} Health diagnosis. Legal compliance checks. Real-time streaming. Pollutants other than \pmten{} and \pmtwofive.\\
+\textbf{Rival answer.} The users need a level in \ugm, not a class (\refid{D-002}, rival R1).\\
+\textbf{Open gaps.} What one value represents: averaging period, sensor position, timestamp convention (\refid{G-01}, \refid{G-02}, \refid{G-05}).
+
+\subsection{WHY -- Why does the product have value?}
+\textbf{Candidate reasons.}
+\begin{itemize}
+  \item Health: commuters and station staff can spend long periods in these spaces. \tAssumed{} until \refid{S-09} and \refid{S-06} are read (\refid{G-14}).
+  \item Operations: ventilation, cleaning and works can be planned on the hours with higher risk instead of all hours. \tAssumed{} (\refid{G-06}).
+  \item Data value: the open data becomes a service that people can use before exposure, not only after it.
+\end{itemize}
+\textbf{Why a class and not a level.} We assume that users take act or do-not-act decisions \tAssumed{} (\refid{G-15}). Rival: users need a level (\refid{D-002}).\\
+\textbf{Why two horizons.} Different users decide at different times (see WHEN) \tAssumed.\\
+\textbf{Why Spark.} The data is small now (about 20\,MB). The same pipeline must work for all stations and many years. Spark is also a course requirement (\refid{D-008}).\\
+\textbf{Rival answer.} The levels are not high enough, or not predictable enough, to justify a warning (\refid{H-06}, \refid{H-01}, \refid{H-02}).
+
+\subsection{WHO -- Who has an interest in the product, and why?}
+All interests below are \tAssumed{} unless a source is given. We must find evidence for each interest or keep the tag.
+The last column shows the cost of a wrong answer for that party. It feeds \refid{G-15}.
+
+\small
+\begin{longtable}{@{}P{0.17\linewidth} P{0.21\linewidth} P{0.18\linewidth} P{0.16\linewidth} P{0.17\linewidth}@{}}
+\toprule
+\textbf{Party} & \textbf{Interest} & \textbf{Decision they take} & \textbf{Output used} & \textbf{Cost of a wrong answer} \\
+\midrule\endhead
+\bottomrule\endfoot
+Station operations and facility managers (SNCF Gares \& Connexions) & Plan ventilation, cleaning and works & When to run equipment and works & Outlook, short-term class & Energy and money wasted, or exposure during works \\
+Occupational health for station agents, cleaning and maintenance staff & Protect staff who spend full shifts in the station & Shift plans, protective equipment & Short-term class per hour & Staff exposed without protection \\
+Sensitive travellers (asthma, heart disease, children, pregnant people) & Avoid high-risk hours or stations & When and where to travel & Simple daily signal & Exposure, or a trip changed for no reason \\
+Île-de-France Mobilités (transport authority) & Compare stations, choose investments (\refid{S-05}) & Where to invest in air treatment & Station ranking, trends & Money spent on the wrong station \\
+Airparif, ANSES, regional health agency & Monitoring and public health policy & Recommendations and reports & Quality-flagged data, method & Wrong conclusions from bad data \\
+Sensor maintenance team & Repair faulty sensors faster & Which sensor to check first & Data-trust flag & Long outages, stuck values \\
+Researchers and open-data users & Reuse of data and method & Their own analyses & Pipeline, flags, documents & Errors copied into other work \\
+Course evaluator & Check a working and explained Spark ML chain & Grade & Notebook, talk, documents & -- (constraint, not a user) \\
+\end{longtable}
+\normalsize
+
+\textbf{Who can be harmed or misled.}
+A traveller who trusts a wrong \emph{not high} class.
+A manager who stops ventilation because of a wrong outlook.
+Station staff if the product is used to show that exposure is acceptable without a health reference.
+Because of this, the product must show the data-trust flag and its error rates, and must not claim a health meaning for the class (\refid{D-003}).
+
+\subsection{WHERE -- Where does the product apply, and where does it run?}
+\textbf{Places.} Four stations with permanent sensors \tObserved{} (\fpath{spark/data/stations.csv}; origin of the coordinates: \refid{G-21}):
+
+\begin{center}
+\begin{tikzpicture}[x=30cm,y=45cm]
+  \draw[gray!40] (0,0) rectangle (0.35,0.11);
+  \foreach \lon/\lat/\code/\name/\pos in {
+    2.2756167/48.870971/AVF/Avenue Foch/below,
+    2.52474/48.94743/BDE/Sevran Beaudottes/below,
+    2.23855/48.89176/DGA/La Défense Grande Arche/above,
+    2.284516/48.877983/NPT/Neuilly -- Porte Maillot/right}{
+    \fill[projblue] ({\lon-2.2},{\lat-48.85}) circle (2pt);
+    \node[font=\scriptsize\sffamily,\pos,align=center] at ({\lon-2.2},{\lat-48.85}) {\code\\\name};
+  }
+  \fill[gray] (0.1522,0.0066) circle (1.5pt) node[right,font=\scriptsize\sffamily,gray] {Paris centre};
+  \node[font=\tiny\sffamily,gray,anchor=south east] at (0.35,0) {lon / lat, not to exact scale};
+\end{tikzpicture}
+\end{center}
+
+Three stations are close together in the west of Paris (Avenue Foch, Neuilly -- Porte Maillot, La Défense). One station is in the north-east suburbs (Sevran Beaudottes).
+
+\textbf{Selection bias.} The producer chose these stations. They are not a random sample \tInterp{} (alternative: the producer chose them to represent different types of underground spaces, \refid{S-01}). Results do not apply to other stations without a test (\refid{H-05}, \refid{G-17}).\\
+\textbf{Open gaps.} Underground or surface, sensor position, ventilation type (\refid{G-05}, \refid{G-06}).\\
+\textbf{Where the output goes} \tAssumed. Station control room screen, staff shift planning, traveller information channel. These channels are examples. We do not build them.\\
+\textbf{Where it runs.} Raw zone \fpath{spark/data/} $\rightarrow$ Bronze $\rightarrow$ Silver $\rightarrow$ Gold in \fpath{spark/lake/} $\rightarrow$ models $\rightarrow$ risk table, on the Docker Spark cluster (\refid{D-014}).
+
+\subsection{WHEN -- When do people use the product, and for which future period?}
+\textbf{Candidate use times} \tAssumed:
+\begin{itemize}
+  \item Every hour: the short-term mode updates the next 24 hours when a new reading arrives. This needs a short publication delay (\refid{G-12}).
+  \item Every evening: a next-day class for shift plans and traveller information.
+  \item Every month or quarter: the outlook mode gives the expected high-risk hours for the next months. Managers use it to put works, cleaning campaigns and filter changes in lower-risk periods.
+  \item After a change in a station (new ventilation, new brake equipment on trains): compare measured levels with the outlook to estimate the effect of the change.
+\end{itemize}
+\textbf{Example.} If the product starts in December 2026, the outlook covers December 2026 to mid 2027.\\
+\textbf{When not to use the product.} During or just after an outage. For a station with a short history (\refid{G-18}). When the data-trust flag is low.\\
+\textbf{Data period.} \tObserved{} 2018-01-01 to 2026-11-25, hourly. Stations start in different years (\refid{G-18}). Split dates: \refid{D-005}.
+
+\subsection{HOW -- How does the product work?}
+\begin{enumerate}
+  \item Ingest the raw CSV with an explicit schema. Write Bronze. Do not change the raw file.
+  \item Add quality flags (Silver). Do not delete values (\refid{D-009}).
+  \item Build features with past values only: calendar features for both modes, lags and rolling means for the short-term mode.
+  \item Fit a Spark ML Pipeline. Transformers: \texttt{SQLTransformer}, \texttt{Imputer}, \texttt{StringIndexer}, \texttt{OneHotEncoder}, \texttt{VectorAssembler}, \texttt{StandardScaler}. Estimators: \texttt{LogisticRegression}, \texttt{RandomForestClassifier} (\refid{D-007}).
+  \item Tune on the validation period. Evaluate one time on the test period (\refid{D-005}, \refid{D-006}).
+  \item Publish the risk table and the data-trust flag.
+\end{enumerate}
+The method document gives the work procedure.
+
+\subsection{HOW MUCH -- How good, how large, how expensive?}
+\textbf{Quality.} We fix the rules before modelling (\refid{D-006}): primary metric, guardrail metrics, results per station, baselines for each mode, and the result that counts as a failure.
+The cost ratio between a missed high hour and a false alarm is not known (\refid{G-15}). We do not assume it. We state the working choice and show a sensitivity analysis.\\
+\textbf{Data.} \tObserved{} 206\,904 rows, 19.6\,MB, 4 stations. History per station: approximately 8.9 years (AVF, BDE), 3.9 years (NPT), 1.9 years (DGA).\\
+\textbf{Compute.} One master (2 cores) and three workers (1\,GB and 3 cores each) \tSource{} (\fpath{spark/docker-compose.yml}). The notebook must run end to end on this cluster.\\
+\textbf{Money.} 0\,EUR: open data and local Docker.\\
+\textbf{Time.} One week (delivery \deliverydate). Talk: 7 minutes and 5 minutes of questions \tSource{} (course brief).
+
+% =====================================================================
+\section{Objectives}
+\subsection{Product objectives}
+\begin{enumerate}
+  \item By \deliverydate, give a risk class for each station and hour for at least one mode that is not refuted, with error rates per station.
+  \item By \deliverydate, give a data-trust flag for each station, from documented quality rules.
+  \item By \deliverydate, test \refid{H-01} and \refid{H-02} with the pre-registered tests and report the result, also if a hypothesis is refuted.
+  \item By \deliverydate, close or explain the impact of the blocking gaps \refid{G-01}, \refid{G-02}, \refid{G-03}, \refid{G-13}.
+\end{enumerate}
+\subsection{Course objectives} \tSource{} (course brief)
+\begin{enumerate}
+  \item Describe the CSV dataset.
+  \item Present and explain the ML chain: Transformer, Estimator, Pipeline, Evaluation.
+  \item Use two or more Transformers and two ML algorithms.
+  \item Define the evaluation for the two methods.
+  \item Supply a notebook that runs. Show and comment the results.
+  \item Give a talk of 7 minutes, then answer questions for 5 minutes.
+\end{enumerate}
+
+% =====================================================================
+\section{User stories}
+Each story has acceptance criteria. All stories are \tAssumed{} until a user or source supports them.
+
+\begin{description}[style=nextline,leftmargin=1.5em,font=\sffamily\bfseries]
+  \item[US-1 Station manager] As a station manager, I want the expected high-risk hours for the next months, so that I can put works and cleaning in lower-risk periods.\\
+  \emph{Acceptance:} outlook per station and week. Error rates on the test period are shown. Hidden if \refid{H-01} is refuted.
+  \item[US-2 Occupational health] As an occupational health officer, I want the risk class for each hour of the next day, so that I can adapt shifts and equipment.\\
+  \emph{Acceptance:} class per station and hour for the next 24 hours. Recall of class high on the test period is shown. Data-trust flag is shown.
+  \item[US-3 Sensitive traveller] As a traveller with asthma, I want a simple signal for my station today, so that I can choose when to travel.\\
+  \emph{Acceptance:} one class per station and period of the day. A text says that the class is relative and not a health limit.
+  \item[US-4 Sensor maintenance] As a maintenance technician, I want to know which sensor sends doubtful data, so that I can repair it first.\\
+  \emph{Acceptance:} list of stations with active flags (outage, stuck value, invalid value) and the start time.
+\end{description}
+
+% =====================================================================
+\section{Constraints}
+\small
+\begin{longtable}{@{}P{0.2\linewidth} P{0.5\linewidth} P{0.22\linewidth}@{}}
+\toprule
+\textbf{Constraint} & \textbf{Value} & \textbf{Source} \\
+\midrule\endhead
+\bottomrule\endfoot
+Course scope & Spark ML chain with at least 2 Transformers and 2 algorithms, notebook that runs, 7 + 5 minute talk & Course brief \\
+Delivery & \deliverydate & Team \\
+Compute & 1 master (2 cores), 3 workers (1\,GB, 3 cores each) & \fpath{spark/docker-compose.yml} \\
+Software & Spark 4.2.0, PySpark, Java 21, Python 3, JupyterLab & \fpath{spark/Dockerfile} \\
+Raw data & Never changed. Processing writes to a separate store & \refid{D-014} \\
+Time series & Chronological split. Features use past values only. Test period used one time & \refid{D-005}, method \\
+Reproducibility & Explicit schema, UTC session time, fixed seeds, \texttt{PYTHONHASHSEED=1}, run from a clean clone & Method \\
+Data quality & Long outages, invalid values, different start dates per station \tObserved & Notebook section 4, \refid{G-07} to \refid{G-11} \\
+Licence & Not known (\refid{G-13}) & \refid{S-01}, \refid{S-02} \\
+Privacy & No personal data in the dataset \tObserved & Data dictionary \\
+Interpretability & Model coefficients and feature importances are shown & \refid{D-007} \\
+Health meaning & The class is relative. It is not a health limit unless \refid{D-003} changes & \refid{D-003} \\
+\end{longtable}
+\normalsize
+
+% =====================================================================
+\section{Assumptions}
+Each assumption has a test or a gap. If the test refutes it, we update the linked decision.
+
+\begin{tabularx}{\linewidth}{@{}l X l@{}}
+\toprule
+\textbf{ID} & \textbf{Assumption} & \textbf{Test or gap} \\
+\midrule
+A-1 & One value is an hourly mean in \ugm{} at a fixed position in the station. & \refid{G-01}, \refid{G-03}, \refid{G-05} \\
+A-2 & Timestamps are UTC and mark one fixed point of the hour. & \refid{G-02} \\
+A-3 & Users take yes or no decisions on air quality. & \refid{G-15} \\
+A-4 & The pattern of the past years continues in 2027 (same train service, same ventilation). & \refid{H-01} on recent data; drift check per year \\
+A-5 & Sensors at different stations give comparable values. & \refid{H-03}, \refid{G-04} \\
+A-6 & Missing values do not depend on the PM level. & \refid{H-07} \\
+\bottomrule
+\end{tabularx}
+
+% =====================================================================
+\section{Scope}
+\subsection{In scope and out of scope}
+\begin{tabularx}{\linewidth}{@{}X X@{}}
+\toprule
+\textbf{In scope} & \textbf{Out of scope} \\
+\midrule
+4 SNCF stations, \pmten{} and \pmtwofive{} & Other stations and operators (kept as \refid{S-08}) \\
+Risk class, two candidate modes, data-trust flag & Real-time service, user interface, alerts \\
+Source search and gap closing & Contact with health authorities \\
+Spark ML chain, two algorithms & Deep learning \\
+Calendar context (holidays, \refid{S-12}) & Weather, traffic and outdoor PM joins, unless time is left \\
+\bottomrule
+\end{tabularx}
+
+\subsection{One-week plan}
+\begin{tabularx}{\linewidth}{@{}l X l@{}}
+\toprule
+\textbf{Date} & \textbf{Work and exit criterion} & \textbf{Method phase} \\
+\midrule
+11-27 & Framing documents. Registers created. & 1 \\
+11-28 & Read the priority sources (\refid{S-01} to \refid{S-04}, \refid{S-09}). Close or update \refid{G-01} to \refid{G-03}, \refid{G-13}, \refid{G-14}. & 2 \\
+11-29 & Bronze and Silver with flags in \fpath{spark/lake/}. Manifest written. Pre-registration sheet signed and dated. & 3--5 \\
+11-30 to 12-01 & Features and the two pipelines for each mode. Validation only. & 6--7 \\
+12-02 & One evaluation on the test period. Registers updated with results, also negative ones. & 8 \\
+12-03 & Talk and rehearsal. Notebook run from a clean clone. & 9 \\
+12-04 & Delivery and talk. & 9 \\
+\bottomrule
+\end{tabularx}
+
+\textbf{If time is short}, we remove in this order: GBT model, outlook heat map, \pmtwofive{} analysis, holiday features. We do not remove: the pre-registration, the baselines, the data-trust flag, the report of negative results.
+
+% =====================================================================
+\section{Risks}
+\small
+\begin{longtable}{@{}P{0.3\linewidth} l l P{0.38\linewidth}@{}}
+\toprule
+\textbf{Risk} & \textbf{Prob.} & \textbf{Impact} & \textbf{Mitigation} \\
+\midrule\endhead
+\bottomrule\endfoot
+Network or source sites not available, so gaps stay open & Medium & High & Record the gap and its impact. Do not replace the missing fact with an assumption without the tag. \\
+Long outages leave too few training hours for a station & Medium & Medium & Measure per station (\refid{G-18}). Exclude the station from a mode and say so. \\
+Leakage from rolling windows or from the threshold & Medium & High & Past-only windows. Threshold from training data only. Leakage check in the method. \\
+Threshold choice changes the conclusions & High & Medium & Pre-register \refid{D-003}. Report the rival threshold as a sensitivity check. \\
+Cluster memory too small & Low & Medium & Small partitions, Parquet, cache only when needed. \\
+Pressure of the deadline leads to selective reporting & Medium & High & Pre-registration. Failure line fixed before results. Registers keep all outcomes. \\
+\end{longtable}
+\normalsize
+
+% =====================================================================
+\section{Go or no-go criteria for the delivery}
+\begin{itemize}
+  \item The notebook runs from a clean clone on the Docker cluster, without manual steps.
+  \item No file in \fpath{spark/data/} is changed (git status and manifest checksums).
+  \item Each blocking gap is closed, or its impact on the results is written.
+  \item Each tested hypothesis shows its pre-registered test and its result.
+  \item The talk shows the baselines and the per-station results, also when the models do not do better.
+\end{itemize}
+
+% =====================================================================
+\section{Course requirements and where we meet them}
+\begin{tabularx}{\linewidth}{@{}X X@{}}
+\toprule
+\textbf{Requirement (course brief)} & \textbf{Where} \\
+\midrule
+Describe the CSV dataset & \fpath{data.pdf}, notebook sections 1--3 \\
+Present the chain (Transformer, Estimator, Pipeline, Evaluation) & This charter, HOW; method phases 6--8 \\
+Two or more Transformers, two algorithms & \refid{D-007}, HOW \\
+Evaluation for the two methods & \refid{D-006}, pre-registration sheet \\
+Notebook that runs, results, comments & Go or no-go criteria \\
+Talk 7 + 5 minutes & Method phase 9 \\
+\bottomrule
+\end{tabularx}
+
+\appendix
+% =====================================================================
+\section{Writing rules}
+\label{app:writing}
+\subsection{Simplified Technical English (ASD-STE100)}
+We write about 80\,\% of the text in ASD-STE100 Simplified Technical English (\refid{D-012}). The rules that we apply are:
+\begin{enumerate}
+  \item Write procedures with a maximum of 20 words for each sentence.
+  \item Write descriptions with a maximum of 25 words for each sentence.
+  \item Write one instruction in each sentence.
+  \item Use the imperative in procedures (``Run the notebook.'').
+  \item Use the active voice.
+  \item Use one word for one meaning. Use the terms of the glossary.
+  \item Use technical names as they are: Spark class names, metric names, file paths, IDs.
+  \item Put conditions before the instruction (``If the build fails, read the log.'').
+  \item Use a list for a sequence of steps.
+\end{enumerate}
+The other 20\,\% is rationale text (for example WHY), where a longer sentence gives a more exact meaning.
+
+\subsection{Neutral wording}
+These rules help to prevent confirmation bias in the text.
+\begin{itemize}
+  \item Do not write ``proves'', ``confirms'', ``clearly'' or ``obviously'' about our own results. Write ``does not refute'', ``agrees with'', ``we observe''.
+  \item Give each interpretation at least one alternative reading.
+  \item Give each number its evidence tag and its source.
+  \item Write the uncertainty: sample size, period, station.
+  \item Write negative results in the same form as positive results.
+\end{itemize}
+
+\subsection{Update rules}
+\begin{itemize}
+  \item Change register content only in the CSV files (\fpath{docs/registers/}).
+  \item Increase the document version when a section changes. Write the date.
+  \item Run \texttt{make} in \fpath{docs/} and commit the sources and the PDFs together.
+\end{itemize}
+
+\clearpage
+\input{glossary}
+
+\end{document}
